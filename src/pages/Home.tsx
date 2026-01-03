@@ -1,6 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { TaskForm } from "@/components/TaskForm";
-import { fetchTasks, updateStatus, deleteTask } from "@/services/task.api";
+import {
+  fetchTasks,
+  updateStatus,
+  deleteTask,
+  updateTask,
+} from "@/services/task.api";
 import type { Task } from "@/types/task";
 import { TaskList } from "@/components/TaskList";
 import { Filters } from "@/components/Filters";
@@ -124,6 +129,22 @@ export const Home = () => {
     }
   };
 
+  const update = async (task: Task) => {
+    const prev = tasks;
+    // optimistic update
+    setTasks((p) => p.map((t) => (t._id === task._id ? task : t)));
+
+    try {
+      const { data } = await updateTask(task._id, task);
+      setTasks((p) => p.map((t) => (t._id === data._id ? data : t)));
+      addToast({ type: "success", title: "Task updated" });
+    } catch (err: any) {
+      console.error(err);
+      setTasks(prev); // revert
+      addToast({ type: "error", title: "Error", description: err?.message });
+    }
+  };
+
   // Server returns filtered & sorted list based on query params
   const displayedTasks = tasks;
 
@@ -157,6 +178,7 @@ export const Home = () => {
           tasks={displayedTasks}
           onToggle={toggle}
           onDelete={remove}
+          onUpdate={update}
           loading={showLoading}
         />
       </div>

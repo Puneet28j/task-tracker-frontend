@@ -8,23 +8,57 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/types/task";
+import { useState } from "react";
+import { TaskForm } from "./TaskForm";
 import {
   Calendar,
   CheckCircle2,
   Circle,
   Trash2,
   ChevronDown,
+  Edit2,
 } from "lucide-react";
 
 type Props = {
   task: Task;
   onToggle: (task: Task) => void;
   onDelete: (id: string) => void;
+  onUpdate?: (task: Task) => void;
 };
 
-export function TaskItem({ task, onToggle, onDelete }: Props) {
+export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
   const isCompleted = task.status === "Completed";
   const hasDescription = Boolean(task.description);
+  const [editing, setEditing] = useState(false);
+
+  if (editing) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
+        <TaskForm
+          initial={{
+            title: task.title,
+            description: task.description ?? "",
+            dueDate: task.dueDate,
+            priority: task.priority,
+          }}
+          onSubmit={async (data) => {
+            // let parent handle update; construct minimal payload
+            const updated: Task = {
+              ...task,
+              title: data.title,
+              description: data.description,
+              priority: data.priority,
+              dueDate: data.dueDate,
+            };
+            if (onUpdate) onUpdate(updated);
+            setEditing(false);
+            return updated;
+          }}
+          onCancel={() => setEditing(false)}
+        />
+      </div>
+    );
+  }
 
   const priorityStyles = {
     High: "text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400",
@@ -91,6 +125,16 @@ export function TaskItem({ task, onToggle, onDelete }: Props) {
               <ChevronDown className="h-4 w-4 text-slate-400 transition-transform data-[state=open]:rotate-180" />
             </AccordionTrigger>
           )}
+
+          {/* EDIT */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mt-1 h-8 w-8 text-slate-400 hover:text-slate-700"
+            onClick={() => setEditing(true)}
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
 
           {/* DELETE */}
           <Button

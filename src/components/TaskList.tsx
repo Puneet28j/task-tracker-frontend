@@ -6,6 +6,7 @@ type Props = {
   tasks: Task[];
   onToggle: (task: Task) => void;
   onDelete: (id: string) => void;
+  onUpdate?: (task: Task) => void;
   loading?: boolean;
 };
 
@@ -20,6 +21,7 @@ export const TaskList = ({
   tasks,
   onToggle,
   onDelete,
+  onUpdate,
   loading = false,
 }: Props) => {
   // If loading and there's no data yet, show skeletons (initial load or empty results)
@@ -69,6 +71,7 @@ export const TaskList = ({
             task={task}
             onToggle={onToggle}
             onDelete={onDelete}
+            onUpdate={onUpdate}
           />
         ))}
       </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Flag, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,10 @@ import { cn } from "@/lib/utils";
 import type { Task } from "@/types/task";
 
 type Props = {
-  onAdd: (task: Task) => void;
+  onAdd?: (task: Task) => void;
+  onSubmit?: (data: FormState) => Promise<Task> | void;
+  initial?: Partial<FormState>;
+  onCancel?: () => void;
 };
 
 type FormState = {
@@ -26,14 +29,26 @@ type FormState = {
   priority: "Low" | "Medium" | "High";
 };
 
-export const TaskForm = ({ onAdd }: Props) => {
+export const TaskForm = ({ onAdd, onSubmit, initial, onCancel }: Props) => {
+  const initialState: FormState = {
+    title: initial?.title ?? "",
+    description: initial?.description ?? "",
+    dueDate: initial?.dueDate ? initial.dueDate.substring(0, 10) : "",
+    priority: (initial?.priority as FormState["priority"]) ?? "Medium",
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState<FormState>({
-    title: "",
-    description: "",
-    dueDate: "",
-    priority: "Medium",
-  });
+  const [form, setForm] = useState<FormState>(initialState);
+
+  useEffect(() => {
+    // Keep form in sync if `initial` changes
+    setForm(initialState);
+  }, [
+    initial?.title,
+    initial?.description,
+    initial?.dueDate,
+    initial?.priority,
+  ]);
 
   const { addToast } = useToast();
   const isValid = Boolean(form.title && form.dueDate);
@@ -48,10 +63,21 @@ export const TaskForm = ({ onAdd }: Props) => {
 
     setIsSubmitting(true);
     try {
-      const { data } = await createTask(form);
-      setForm({ title: "", description: "", dueDate: "", priority: "Medium" });
-      addToast({ type: "success", title: "Task created" });
-      onAdd(data);
+      if (onSubmit) {
+        const result = await onSubmit(form);
+        if (result && onAdd) onAdd(result);
+        addToast({ type: "success", title: "Task saved" });
+      } else {
+        const { data } = await createTask(form);
+        setForm({
+          title: "",
+          description: "",
+          dueDate: "",
+          priority: "Medium",
+        });
+        addToast({ type: "success", title: "Task created" });
+        if (onAdd) onAdd(data);
+      }
     } catch (err: any) {
       addToast({ type: "error", title: "Error", description: err?.message });
     } finally {
@@ -123,21 +149,35 @@ export const TaskForm = ({ onAdd }: Props) => {
           </Select>
         </div>
 
-        <Button
-          type="submit"
-          size="sm"
-          disabled={!isValid || isSubmitting}
-          className="h-9 w-full sm:w-auto px-5 text-xs font-bold transition-all shadow-sm active:scale-95"
-        >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <div className="flex items-center justify-center gap-1.5">
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onCancel}
+              className="h-9 px-3 text-xs"
+            >
+              Cancel
+            </Button>
           )}
-        </Button>
+
+          <Button
+            type="submit"
+            size="sm"
+            disabled={!isValid || isSubmitting}
+            className="h-9 w-full sm:w-auto px-5 text-xs font-bold transition-all shadow-sm active:scale-95"
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <div className="flex items-center justify-center gap-1.5">
+                <Plus className="h-4 w-4" />
+                <span>{onSubmit ? "Save" : "Add Task"}</span>
+              </div>
+            )}
+          </Button>
+        </div>
       </div>
     </form>
   );
