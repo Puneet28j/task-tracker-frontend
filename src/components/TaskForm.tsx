@@ -149,14 +149,14 @@ export const TaskForm = ({ onAdd, onSubmit, initial, onCancel }: Props) => {
           </Select>
         </div>
 
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           {onCancel && (
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={onCancel}
-              className="h-9 px-3 text-xs"
+              className="h-9 w-full sm:w-auto px-3 text-xs"
             >
               Cancel
             </Button>
