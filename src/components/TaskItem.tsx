@@ -31,6 +31,8 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
   const hasDescription = Boolean(task.description);
   const [editing, setEditing] = useState(false);
 
+  /* ================= EDIT MODE ================= */
+
   if (editing) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950">
@@ -42,7 +44,6 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
             priority: task.priority,
           }}
           onSubmit={async (data) => {
-            // let parent handle update; construct minimal payload
             const updated: Task = {
               ...task,
               title: data.title,
@@ -50,7 +51,7 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
               priority: data.priority,
               dueDate: data.dueDate,
             };
-            if (onUpdate) onUpdate(updated);
+            onUpdate?.(updated);
             setEditing(false);
             return updated;
           }}
@@ -60,12 +61,14 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
     );
   }
 
+  /* ================= VIEW MODE ================= */
+
   const priorityStyles = {
     High: "text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400",
     Medium:
       "text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400",
     Low: "text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400",
-  };
+  } as const;
 
   return (
     <Accordion type="single" collapsible>
@@ -75,9 +78,12 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
       >
         {/* ROW */}
         <div className="flex items-start gap-2 px-3 py-2">
-          {/* COMPLETE */}
+          {/* COMPLETE TOGGLE */}
           <button
-            onClick={() => onToggle(task)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle(task);
+            }}
             className="mt-1 shrink-0 transition active:scale-90"
           >
             {isCompleted ? (
@@ -87,9 +93,8 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
             )}
           </button>
 
-          {/* CENTER */}
+          {/* MAIN CONTENT */}
           <div className="flex-1 min-w-0">
-            {/* TITLE */}
             <p
               className={cn(
                 "truncate text-sm font-medium",
@@ -101,7 +106,6 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
               {task.title}
             </p>
 
-            {/* META (MOBILE + DESKTOP) */}
             <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
               <Badge
                 className={cn(
@@ -119,11 +123,17 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
             </div>
           </div>
 
-          {/* CHEVRON */}
+          {/* ACCORDION TRIGGER (ISOLATED ZONE) */}
           {hasDescription && (
-            <AccordionTrigger className="mt-1 flex items-center p-0 h-8 w-8 hover:no-underline">
-              <ChevronDown className="h-4 w-4 text-slate-400 transition-transform data-[state=open]:rotate-180" />
-            </AccordionTrigger>
+            <div className="flex items-start pt-1">
+              <AccordionTrigger
+                variant="icon"
+                hideChevron
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ChevronDown className="h-4 w-4 text-slate-500" />
+              </AccordionTrigger>
+            </div>
           )}
 
           {/* EDIT */}
@@ -131,7 +141,10 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
             variant="ghost"
             size="icon"
             className="mt-1 h-8 w-8 text-slate-400 hover:text-slate-700"
-            onClick={() => setEditing(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditing(true);
+            }}
           >
             <Edit2 className="h-4 w-4" />
           </Button>
@@ -140,8 +153,12 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
           <Button
             variant="ghost"
             size="icon"
-            className="mt-1 h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-            onClick={() => onDelete(task._id)}
+            className="mt-1 h-8 w-8 text-slate-400 hover:text-red-500
+                       hover:bg-red-50 dark:hover:bg-red-950/30"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task._id);
+            }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -150,7 +167,11 @@ export function TaskItem({ task, onToggle, onDelete, onUpdate }: Props) {
         {/* DESCRIPTION */}
         {hasDescription && (
           <AccordionContent className="px-11 pb-4">
-            <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+            <div
+              className="rounded-lg border border-slate-100 bg-slate-50 p-3
+                            text-sm text-slate-600
+                            dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
+            >
               {task.description}
             </div>
           </AccordionContent>

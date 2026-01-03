@@ -26,12 +26,14 @@ function AccordionItem({
 interface AccordionTriggerProps
   extends React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> {
   hideChevron?: boolean;
+  variant?: "default" | "icon";
 }
 
 function AccordionTrigger({
   className,
   children,
   hideChevron = false,
+  variant = "default",
   ...props
 }: AccordionTriggerProps) {
   return (
@@ -39,14 +41,19 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+          "focus-visible:border-ring focus-visible:ring-ring/50 transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50",
+          variant === "default" &&
+            "flex w-full items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium hover:underline [&[data-state=open]>svg]:rotate-180",
+          variant === "icon" &&
+            "grid h-8 w-8 place-items-center rounded-md p-0 hover:bg-slate-100 dark:hover:bg-slate-800 [&[data-state=open]>svg]:rotate-180",
           className
         )}
         {...props}
       >
         {children}
-        {!hideChevron && (
-          <ChevronDownIcon className="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
+
+        {!hideChevron && variant === "default" && (
+          <ChevronDownIcon className="text-muted-foreground size-4 shrink-0 transition-transform duration-200" />
         )}
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
